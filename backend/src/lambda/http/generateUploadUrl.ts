@@ -1,12 +1,15 @@
-import { APIGatewayProxyHandler, APIGatewayProxyEvent, APIGatewayProxyResult } from 'aws-lambda'
-import * as AWS from 'aws-sdk'
+import {
+  APIGatewayProxyHandler,
+  APIGatewayProxyEvent,
+  APIGatewayProxyResult
+} from 'aws-lambda'
 import * as uuid from 'uuid'
 import 'source-map-support/register'
+import { docClient, s3 } from '../aws-docs'
 
-
-const docClient = new AWS.DynamoDB.DocumentClient()
-
-export const handler: APIGatewayProxyHandler = async (event: APIGatewayProxyEvent): Promise<APIGatewayProxyResult> => {
+export const handler: APIGatewayProxyHandler = async (
+  event: APIGatewayProxyEvent
+): Promise<APIGatewayProxyResult> => {
   const todoId = event.pathParameters.todoId
 
   console.log(todoId)
@@ -16,11 +19,7 @@ export const handler: APIGatewayProxyHandler = async (event: APIGatewayProxyEven
 
   const imageId = uuid.v4()
 
-  const s3 = new AWS.S3({
-    signatureVersion: 'v4'
-  })
-
-  const url = s3.getSignedUrl('putObject',{
+  const url = s3.getSignedUrl('putObject', {
     Bucket: bucket,
     Key: imageId,
     Expires: url_exp
@@ -30,24 +29,24 @@ export const handler: APIGatewayProxyHandler = async (event: APIGatewayProxyEven
 
   const updateUrlOnTodo = {
     TableName: todosTable,
-    Key: { "todoId": todoId },
-    UpdateExpression: "set attachmentUrl = :a",
-    ExpressionAttributeValues:{
-      ":a": imageUrl
-  },
-  ReturnValues:"UPDATED_NEW"
+    Key: { todoId: todoId },
+    UpdateExpression: 'set attachmentUrl = :a',
+    ExpressionAttributeValues: {
+      ':a': imageUrl
+    },
+    ReturnValues: 'UPDATED_NEW'
   }
 
-await docClient.update(updateUrlOnTodo).promise()
+  await docClient.update(updateUrlOnTodo).promise()
 
   return {
-      statusCode: 201,
-      headers: {
-          'Access-Control-Allow-Origin': '*'
-      },
-      body: JSON.stringify({
-          iamgeUrl: imageUrl,
-          uploadUrl: url
-      })
+    statusCode: 201,
+    headers: {
+      'Access-Control-Allow-Origin': '*'
+    },
+    body: JSON.stringify({
+      iamgeUrl: imageUrl,
+      uploadUrl: url
+    })
   }
 }

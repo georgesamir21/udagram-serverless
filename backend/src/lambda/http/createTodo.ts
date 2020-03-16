@@ -1,45 +1,51 @@
-import { APIGatewayProxyHandler, APIGatewayProxyEvent, APIGatewayProxyResult } from 'aws-lambda'
-import * as AWS from 'aws-sdk'
+import {
+  APIGatewayProxyHandler,
+  APIGatewayProxyEvent,
+  APIGatewayProxyResult
+} from 'aws-lambda'
 import 'source-map-support/register'
 import * as uuid from 'uuid'
 import { parseUserId } from '../../auth/utils'
 
-const docClient = new AWS.DynamoDB.DocumentClient()
-
 const todosTable = process.env.TODOS_TABLE
 
-export const handler: APIGatewayProxyHandler = async (event: APIGatewayProxyEvent): Promise<APIGatewayProxyResult> => {
-    
-    console.log("EVENT:", event);
+import { docClient } from '../aws-docs'
 
-    const todoId = uuid.v4()
+export const handler: APIGatewayProxyHandler = async (
+  event: APIGatewayProxyEvent
+): Promise<APIGatewayProxyResult> => {
+  console.log('EVENT:', event)
 
-    const parsedBody = JSON.parse(event.body)
+  const todoId = uuid.v4()
 
-    const authHeader = event.headers.Authorization
-    const authSplit = authHeader.split(" ")
-    const token = authSplit[1]
+  const parsedBody = JSON.parse(event.body)
 
-    console.log("test",token)
+  const authHeader = event.headers.Authorization
+  const authSplit = authHeader.split(' ')
+  const token = authSplit[1]
 
-    const item = {
-      todoId: todoId,
-        userId: parseUserId(token),
-        ...parsedBody
-    }
+  console.log('test', token)
 
-    await docClient.put({
-        TableName: todosTable,
-        Item: item
-    }).promise()
+  const item = {
+    todoId: todoId,
+    userId: parseUserId(token),
+    ...parsedBody
+  }
 
-    return {
-        statusCode: 201,
-        headers: {
-            'Access-Control-Allow-Origin': '*'
-        },
-        body: JSON.stringify({
-          item
-        })
-    }
+  await docClient
+    .put({
+      TableName: todosTable,
+      Item: item
+    })
+    .promise()
+
+  return {
+    statusCode: 201,
+    headers: {
+      'Access-Control-Allow-Origin': '*'
+    },
+    body: JSON.stringify({
+      item
+    })
+  }
 }

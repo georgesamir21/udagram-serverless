@@ -1,13 +1,16 @@
-import { APIGatewayProxyHandler, APIGatewayProxyEvent, APIGatewayProxyResult } from 'aws-lambda'
-import * as AWS from 'aws-sdk'
+import {
+  APIGatewayProxyHandler,
+  APIGatewayProxyEvent,
+  APIGatewayProxyResult
+} from 'aws-lambda'
 import 'source-map-support/register'
 //import { parseUserId } from '../../auth/utils'
 import { UpdateTodoRequest } from '../../requests/UpdateTodoRequest'
+import { docClient } from '../aws-docs'
 
-
-const docClient = new AWS.DynamoDB.DocumentClient()
-
-export const handler: APIGatewayProxyHandler = async (event: APIGatewayProxyEvent): Promise<APIGatewayProxyResult> => {
+export const handler: APIGatewayProxyHandler = async (
+  event: APIGatewayProxyEvent
+): Promise<APIGatewayProxyResult> => {
   const todoId = event.pathParameters.todoId
   const updatedTodo: UpdateTodoRequest = JSON.parse(event.body)
 
@@ -15,28 +18,28 @@ export const handler: APIGatewayProxyHandler = async (event: APIGatewayProxyEven
 
   const updateTodoParams = {
     TableName: todosTable,
-    Key: { "todoId": todoId },
-    UpdateExpression: "set #n = :a, dueDate = :b, done = :c",
-    ExpressionAttributeValues:{
-      ":a": updatedTodo['name'],
-      ":b": updatedTodo.dueDate,
-      ":c": updatedTodo.done
+    Key: { todoId: todoId },
+    UpdateExpression: 'set #n = :a, dueDate = :b, done = :c',
+    ExpressionAttributeValues: {
+      ':a': updatedTodo['name'],
+      ':b': updatedTodo.dueDate,
+      ':c': updatedTodo.done
     },
-    ExpressionAttributeNames:{
-      "#n": "name"
+    ExpressionAttributeNames: {
+      '#n': 'name'
     },
-    ReturnValues:"UPDATED_NEW"
+    ReturnValues: 'UPDATED_NEW'
   }
 
-const runthis = await docClient.update(updateTodoParams).promise()
+  const runthis = await docClient.update(updateTodoParams).promise()
 
-return {
+  return {
     statusCode: 201,
     headers: {
-        'Access-Control-Allow-Origin': '*'
+      'Access-Control-Allow-Origin': '*'
     },
     body: JSON.stringify({
       runthis
     })
-}
+  }
 }
