@@ -20,6 +20,19 @@ provider:
     S3_BUCKET: serverless-udagram-george-s3-${self:provider.stage}
     SIGNED_URL_EXPIRATION: 300
 
+custom:
+  topicName: toDosTopic-${self:provider.stage}
+  documentation:
+    api:
+      info:
+        version: v1.0.0
+        title: Udagram API
+        description: Serverless application for image sharing
+    models:
+      - name: ToDoRequest
+        contentType: application/json
+        schema: ${file(src/models/create-todo-schema.json)}
+
 functions:
   Auth:
     handler: src/lambda/auth/auth0Authorizer.handler
@@ -49,9 +62,12 @@ functions:
           method: post
           path: todos
           cors: true
-          authorizer: Auth
-          request:
-            schema: application/json: ${file(src/models/create-todo-schema.json)}
+          reqValidatorName: RequestBodyValidator
+          documentation:
+            summary: Create a new todo
+            description: Create a new todo
+            requestModels:
+              'application/json': ToDoRequest
     iamRoleStatementsName: ${self:service.name}-create-todo-role-${self:provider.stage}
     iamRoleStatements:
       - Effect: Allow
