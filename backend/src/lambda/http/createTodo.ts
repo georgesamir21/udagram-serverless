@@ -6,10 +6,7 @@ import {
 import 'source-map-support/register'
 import * as uuid from 'uuid'
 import { parseUserId } from '../../auth/utils'
-
-const todosTable = process.env.TODOS_TABLE
-
-import { docClient } from '../aws-docs'
+import { createTodo } from '../../business/todo'
 
 export const handler: APIGatewayProxyHandler = async (
   event: APIGatewayProxyEvent
@@ -26,18 +23,13 @@ export const handler: APIGatewayProxyHandler = async (
 
   console.log('test', token)
 
-  const item = {
+  const toDo = {
     todoId: todoId,
     userId: parseUserId(token),
     ...parsedBody
   }
 
-  await docClient
-    .put({
-      TableName: todosTable,
-      Item: item
-    })
-    .promise()
+  const item = await createTodo(toDo)
 
   return {
     statusCode: 201,

@@ -4,24 +4,14 @@ import {
   APIGatewayProxyResult
 } from 'aws-lambda'
 import 'source-map-support/register'
-
-import { docClient } from '../aws-docs'
-
-const todosTable = process.env.TODOS_TABLE
+import { deleteTodo } from '../../business/todo'
 
 export const handler: APIGatewayProxyHandler = async (
   event: APIGatewayProxyEvent
 ): Promise<APIGatewayProxyResult> => {
   const todoId = event.pathParameters.todoId
 
-  await docClient
-    .delete({
-      TableName: todosTable,
-      Key: {
-        todoId: todoId
-      }
-    })
-    .promise()
+  await deleteTodo(todoId)
 
   return {
     statusCode: 201,

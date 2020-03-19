@@ -5,9 +5,7 @@ import {
 } from 'aws-lambda'
 import 'source-map-support/register'
 import { parseUserId } from '../../auth/utils'
-import { docClient } from '../aws-docs'
-
-const todosTable = process.env.TODOS_TABLE
+import { getAllTodos } from '../../business/todo'
 
 export const handler: APIGatewayProxyHandler = async (
   event: APIGatewayProxyEvent
@@ -18,20 +16,7 @@ export const handler: APIGatewayProxyHandler = async (
   const authSplit = authHeader.split(' ')
   const userId = parseUserId(authSplit[1])
 
-  const result = await docClient
-    .query({
-      TableName: todosTable,
-      IndexName: 'UserIdIndex',
-      KeyConditionExpression: 'userId = :userId',
-      ExpressionAttributeValues: {
-        ':userId': userId
-      },
-
-      ScanIndexForward: false
-    })
-    .promise()
-
-  const items = result.Items
+  const items = await getAllTodos(userId)
 
   return {
     statusCode: 200,
